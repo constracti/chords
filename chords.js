@@ -7,26 +7,24 @@ function chords(options = null) {
 			form: options,
 		};
 	}
-	if (!('hide' in options)) {
-		options.hide = '.chords-hide';
-	}
-	if (!('text' in options)) {
-		options.text = '.chords-text';
-	}
-	if (!('larger' in options)) {
-		options.larger = '.chords-larger';
-	}
-	if (!('smaller' in options)) {
-		options.smaller = '.chords-smaller';
-	}
+	const props = [
+		'hide',
+		'text',
+		'larger',
+		'smaller',
+	];
+	props.forEach(prop => {
+		if (!(prop in options))
+			options[prop] = '.chords-' + prop;
+	});
 	(function($) {
 		$(document).ready(function() {
 			options.form = $(options.form);
 			options.href = options.form.data('chords');
-			options.hide = options.form.find(options.hide);
-			options.text = options.form.find(options.text);
-			options.larger = options.form.find(options.larger);
-			options.smaller = options.form.find(options.smaller);
+			props.forEach(prop => {
+				if (typeof(options[prop]) === 'string')
+					options[prop] = options.form.find(options[prop]);
+			});
 			options.hide.hide();
 			options.text.css('display', 'block')
 				.css('font-family', 'monospace')
@@ -34,7 +32,19 @@ function chords(options = null) {
 			options.larger.hide();
 			options.smaller.hide();
 			options.form.on('submit', function() {
-				jQuery.get(options.href).done(function(data) {
+				$.get(options.href).done(function(data) {
+					data = $('<div>' + data + '</div>').text();
+					const lines_old = data.split('\n'); // TODO accept all types of EOL
+					const lines_new = [];
+					lines_old.forEach(line => {
+						let ws = line.match(/\s/g);
+						ws = (ws !== null) ? ws.length : 0;
+						const is_chords = line.length ? (ws / line.length >= .5) : false;
+						if (is_chords)
+							line = '<b>' + line + '</b>';
+						lines_new.push(line);
+					});
+					data = lines_new.join('\n');
 					options.hide.show();
 					options.text.html(data);
 					options.larger.show();
