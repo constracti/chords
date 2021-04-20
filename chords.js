@@ -23,9 +23,38 @@ function chords(options = null) {
 			options[prop] = '.chords-' + prop;
 	});
 	const tools = {
+		re: /([A-G])(bb?|#|x)?/g,
 		is_primary: i => [0, 3, 4].includes(i),
+		_steps: ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
+		step2str: i => tools._steps[i],
+		step2int: s => tools._steps.indexOf(s),
+		_alters: ['bb', 'b', '', '#', 'x'],
+		alter2str: i => tools._alters[i + 2],
+		alter2int: s => tools._alters.indexOf(s !== undefined ? s : '') - 2,
 		_values: [0, 2, 4, 5, 7, 9, 11],
 		step2val: i => i in tools._values ? tools._values[i] : '*',
+		transpose: function(note, transpose) {
+			let step = note[0];
+			let alter = note[1];
+			step = tools.step2int(step);
+			alter = tools.alter2int(alter);
+			alter += tools.step2val(step);
+			step += transpose.diatonic;
+			alter += transpose.chromatic;
+			while (step < 0) {
+				step += 7;
+				alter += 12;
+			}
+			while (step >= 7) {
+				step -= 7;
+				alter -= 12;
+			}
+			alter -= tools.step2val(step);
+			step = tools.step2str(step);
+			alter = tools.alter2str(alter);
+			note = [step, alter];
+			return note;
+		},
 	};
 	(function($) {
 		$(document).ready(function() {
@@ -105,8 +134,29 @@ function chords(options = null) {
 						let ws = line.match(/\s/g);
 						ws = (ws !== null) ? ws.length : 0;
 						const is_chords = line.length ? (ws / line.length >= .5) : false;
-						if (is_chords)
+						if (is_chords) {
+							let offset = 0;
+							const miter = line.matchAll(tools.re);
+							for (const m of miter) {
+								const note_old = m[0];
+								const note_new = tools.transpose([m[1], m[2]], transpose).join('');
+								let prev = line.slice(0, m.index + offset);
+								let next = line.slice(m.index + offset + note_old.length);
+								if (offset < 0 && prev.slice(-1) !== '/') {
+									prev += ' '.repeat(-offset);
+									offset = 0;
+								}
+								while (offset > 0) {
+									if (prev.slice(-2) !== '  ')
+										break;
+									prev = prev.slice(0, -1);
+									offset--;
+								}
+								line = prev + note_new + next;
+								offset += note_new.length - note_old.length;
+							}
 							line = '<b>' + line + '</b>';
+						}
 						lines_new.push(line);
 					});
 					data = lines_new.join('\n');
