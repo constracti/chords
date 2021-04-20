@@ -22,6 +22,11 @@ function chords(options = null) {
 		if (!(prop in options))
 			options[prop] = '.chords-' + prop;
 	});
+	const tools = {
+		is_primary: i => [0, 3, 4].includes(i),
+		_values: [0, 2, 4, 5, 7, 9, 11],
+		step2val: i => i in tools._values ? tools._values[i] : '*',
+	};
 	(function($) {
 		$(document).ready(function() {
 			options.form = $(options.form);
@@ -69,8 +74,8 @@ function chords(options = null) {
 			options.larger.hide();
 			options.smaller.hide();
 			options.interval.on('change', function() {
-				const is_primary = [0, 3, 4].includes(parseInt(options.interval.val()));
-				if (is_primary) {
+				const interval = parseInt(options.interval.val());
+				if (tools.is_primary(interval)) {
 					options.primary.show();
 					options.secondary.hide();
 				} else {
@@ -81,6 +86,17 @@ function chords(options = null) {
 				options.secondary.val('0');
 			}).change();
 			options.form.on('submit', function() {
+				const transpose = {};
+				transpose.diatonic = parseInt(options.interval.val());
+				transpose.chromatic = tools.step2val(transpose.diatonic);
+				if (tools.is_primary(transpose.diatonic))
+					transpose.chromatic += parseInt(options.primary.val());
+				else
+					transpose.chromatic += parseInt(options.secondary.val());
+				if (options.dir.val() !== 'up') {
+					transpose.diatonic = -transpose.diatonic;
+					transpose.chromatic = -transpose.chromatic;
+				}
 				$.get(options.href).done(function(data) {
 					data = $('<div>' + data + '</div>').text();
 					const lines_old = data.split('\n'); // TODO accept all types of EOL
