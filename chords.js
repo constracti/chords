@@ -118,7 +118,7 @@ function chords(options = null) {
 		if (!(prop in options))
 			options[prop] = '.chords-' + prop;
 	});
-	// function
+	// ready
 	(function($) {
 		$(document).ready(function() {
 			options.form = $(options.form);
@@ -183,7 +183,7 @@ function chords(options = null) {
 				}
 				$.get(options.href).done(function(data) {
 					data = $('<div>' + data + '</div>').text();
-					const lines_old = data.split('\n'); // TODO accept all types of EOL
+					const lines_old = data.split(/\n|\r\n|\r|\n\r/);
 					const lines_new = [];
 					lines_old.forEach(line => {
 						let ws = line.match(/\s/g);
