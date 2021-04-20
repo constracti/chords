@@ -1,13 +1,109 @@
-// TODO translate terms
 function chords(options = null) {
+	// intervals
+	const dirs = [
+		['up', 'up'],
+		['down', 'down'],
+	];
+	const intervals = [
+		[0, '1st'],
+		[1, '2nd'],
+		[2, '3rd'],
+		[3, '4th'],
+		[4, '5th'],
+		[5, '6th'],
+		[6, '7th'],
+	];
+	const primary = [
+		[-1, 'diminished'],
+		[ 0, 'perfect'],
+		[ 1, 'augmented'],
+	];
+	const secondary = [
+		[-2, 'diminished'],
+		[-1, 'minor'],
+		[ 0, 'major'],
+		[ 1, 'augmented'],
+	];
+	// translator
+	const translator = {
+		_languages: {},
+		add_language: (lang, terms) => {
+			translator._languages[lang] = {};
+			for (const term of terms)
+				translator._languages[lang][term[0]] = term[1];
+		},
+		translate: (s, lang) => {
+			if (!(lang in translator._languages))
+				return s;
+			if (!(s in translator._languages[lang]))
+				return s;
+			return translator._languages[lang][s];
+		},
+	};
+	translator.add_language('el', [
+		['up', 'πάνω'],
+		['down', 'κάτω'],
+		['1st', '1ης'],
+		['2nd', '2ης'],
+		['3rd', '3ης'],
+		['4th', '4ης'],
+		['5th', '5ης'],
+		['6th', '6ης'],
+		['7th', '7ης'],
+		['diminished', 'ελαττωμένο'],
+		['minor', 'μικρό'],
+		['perfect', 'καθαρό'],
+		['major', 'μεγάλο'],
+		['augmented', 'αυξημένο'],
+	]);
+	// transposer
+	const transposer = {
+		_re: /([A-G])(bb?|#|x)?/g,
+		is_primary: i => [0, 3, 4].includes(i),
+		_steps: ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
+		step2str: i => transposer._steps[i],
+		step2int: s => transposer._steps.indexOf(s),
+		_alters: ['bb', 'b', '', '#', 'x'],
+		alter2str: i => transposer._alters[i + 2],
+		alter2int: s => transposer._alters.indexOf(s !== undefined ? s : '') - 2,
+		_values: [0, 2, 4, 5, 7, 9, 11],
+		step2val: i => i in transposer._values ? transposer._values[i] : '*',
+		transpose: function(note, transpose) {
+			let step = note[0];
+			let alter = note[1];
+			step = transposer.step2int(step);
+			alter = transposer.alter2int(alter);
+			alter += transposer.step2val(step);
+			step += transpose.diatonic;
+			alter += transpose.chromatic;
+			while (step < 0) {
+				step += 7;
+				alter += 12;
+			}
+			while (step >= 7) {
+				step -= 7;
+				alter -= 12;
+			}
+			alter -= transposer.step2val(step);
+			step = transposer.step2str(step);
+			alter = transposer.alter2str(alter);
+			note = [step, alter];
+			return note;
+		},
+	};
+	// options
 	if (options === null) {
-		options = '#chords';
+		options = {};
 	}
 	if (typeof(options) === 'string') {
 		options = {
 			form: options,
 		};
 	}
+	if (!('form' in options))
+		options.form = '#chords';
+	if (!('lang' in options))
+		options.lang = 'en';
 	const props = [
 		'dir',
 		'interval',
@@ -22,40 +118,7 @@ function chords(options = null) {
 		if (!(prop in options))
 			options[prop] = '.chords-' + prop;
 	});
-	const tools = {
-		re: /([A-G])(bb?|#|x)?/g,
-		is_primary: i => [0, 3, 4].includes(i),
-		_steps: ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
-		step2str: i => tools._steps[i],
-		step2int: s => tools._steps.indexOf(s),
-		_alters: ['bb', 'b', '', '#', 'x'],
-		alter2str: i => tools._alters[i + 2],
-		alter2int: s => tools._alters.indexOf(s !== undefined ? s : '') - 2,
-		_values: [0, 2, 4, 5, 7, 9, 11],
-		step2val: i => i in tools._values ? tools._values[i] : '*',
-		transpose: function(note, transpose) {
-			let step = note[0];
-			let alter = note[1];
-			step = tools.step2int(step);
-			alter = tools.alter2int(alter);
-			alter += tools.step2val(step);
-			step += transpose.diatonic;
-			alter += transpose.chromatic;
-			while (step < 0) {
-				step += 7;
-				alter += 12;
-			}
-			while (step >= 7) {
-				step -= 7;
-				alter -= 12;
-			}
-			alter -= tools.step2val(step);
-			step = tools.step2str(step);
-			alter = tools.alter2str(alter);
-			note = [step, alter];
-			return note;
-		},
-	};
+	// function
 	(function($) {
 		$(document).ready(function() {
 			options.form = $(options.form);
@@ -64,37 +127,29 @@ function chords(options = null) {
 				if (typeof(options[prop]) === 'string')
 					options[prop] = options.form.find(options[prop]);
 			});
-			[
-				['up', 'up'],
-				['down', 'down'],
-			].forEach(x => {
-				options.dir.append('<option value="' + x[0] + '">' + x[1] + '</option>');
+			dirs.forEach(x => {
+				const value = x[0];
+				const text = translator.translate(x[1], options.lang);
+				const html = '<option value="' + value + '">' + text + '</option>';
+				options.dir.append(html);
 			});
-			[
-				[0, '1st'],
-				[1, '2nd'],
-				[2, '3rd'],
-				[3, '4th'],
-				[4, '5th'],
-				[5, '6th'],
-				[6, '7th'],
-			].forEach(x => {
-				options.interval.append('<option value="' + x[0] + '">' + x[1] + '</option>');
+			intervals.forEach(x => {
+				const value = x[0];
+				const text = translator.translate(x[1], options.lang);
+				const html = '<option value="' + value + '">' + text + '</option>';
+				options.interval.append(html);
 			});
-			[
-				[-1, 'diminished'],
-				[ 0, 'perfect'],
-				[ 1, 'augmented'],
-			].forEach(x => {
-				options.primary.append('<option value="' + x[0] + '">' + x[1] + '</option>');
+			primary.forEach(x => {
+				const value = x[0];
+				const text = translator.translate(x[1], options.lang);
+				const html = '<option value="' + value + '">' + text + '</option>';
+				options.primary.append(html);
 			});
-			[
-				[-2, 'diminished'],
-				[-1, 'minor'],
-				[ 0, 'major'],
-				[ 1, 'augmented'],
-			].forEach(x => {
-				options.secondary.append('<option value="' + x[0] + '">' + x[1] + '</option>');
+			secondary.forEach(x => {
+				const value = x[0];
+				const text = translator.translate(x[1], options.lang);
+				const html = '<option value="' + value + '">' + text + '</option>';
+				options.secondary.append(html);
 			});
 			options.hide.hide();
 			options.text.css('display', 'block')
@@ -104,7 +159,7 @@ function chords(options = null) {
 			options.smaller.hide();
 			options.interval.on('change', function() {
 				const interval = parseInt(options.interval.val());
-				if (tools.is_primary(interval)) {
+				if (transposer.is_primary(interval)) {
 					options.primary.show();
 					options.secondary.hide();
 				} else {
@@ -117,8 +172,8 @@ function chords(options = null) {
 			options.form.on('submit', function() {
 				const transpose = {};
 				transpose.diatonic = parseInt(options.interval.val());
-				transpose.chromatic = tools.step2val(transpose.diatonic);
-				if (tools.is_primary(transpose.diatonic))
+				transpose.chromatic = transposer.step2val(transpose.diatonic);
+				if (transposer.is_primary(transpose.diatonic))
 					transpose.chromatic += parseInt(options.primary.val());
 				else
 					transpose.chromatic += parseInt(options.secondary.val());
@@ -136,10 +191,10 @@ function chords(options = null) {
 						const is_chords = line.length ? (ws / line.length >= .5) : false;
 						if (is_chords) {
 							let offset = 0;
-							const miter = line.matchAll(tools.re);
+							const miter = line.matchAll(transposer._re);
 							for (const m of miter) {
 								const note_old = m[0];
-								const note_new = tools.transpose([m[1], m[2]], transpose).join('');
+								const note_new = transposer.transpose([m[1], m[2]], transpose).join('');
 								let prev = line.slice(0, m.index + offset);
 								let next = line.slice(m.index + offset + note_old.length);
 								if (offset < 0 && prev.slice(-1) !== '/') {
