@@ -136,7 +136,7 @@ function chords(selector, options = {}) {
 					const html = '<option value="' + value + '">' + text + '</option>';
 					obj.dir.append(html);
 				});
-				obj.intervals.empty();
+				obj.interval.empty();
 				transposer.intervals.forEach(x => {
 					const value = x[0];
 					const text = translator.translate(x[1], obj.lang);
