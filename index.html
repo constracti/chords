@@ -3,23 +3,27 @@
 	<head>
 		<meta charset="utf-8">
 		<title>chords</title>
+		<link rel="stylesheet" href="style.css">
 		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 		<script src="chords.js"></script>
 	</head>
-	<body>
-		<form id="chords" data-chords="chords.txt">
-			<select class="chords-dir"></select>
-			<select class="chords-interval"></select>
-			<select class="chords-primary"></select>
-			<select class="chords-secondary"></select>
-			<button type="submit" class="chords-show">show</button>
-			<button type="button" class="chords-hide">hide</button>
-			<button type="button" class="chords-larger">&plus;</button>
-			<button type="button" class="chords-smaller">&minus;</button>
-			<div class="chords-text"></div>
+	<body class="flex-col root" style="overflow-y: hidden;">
+		<h1 class="leaf">chords</h1>
+		<form class="chords flex-row flex-grow" data-chords-input=".chords-input" style="overflow-y: hidden;">
+			<textarea class="chords-input leaf s6" style="resize: none;"></textarea>
+			<div class="flex-col s6" style="overflow-y: hidden;">
+				<div class="flex-row flex-wrap">
+					<select class="chords-dir leaf"></select>
+					<select class="chords-interval leaf"></select>
+					<select class="chords-primary leaf"></select>
+					<select class="chords-secondary leaf"></select>
+					<button type="submit" class="chords-show leaf">show</button>
+					<button type="button" class="chords-hide leaf">hide</button>
+					<button type="button" class="chords-larger leaf">&plus;</button>
+					<button type="button" class="chords-smaller leaf">&minus;</button>
+				</div>
+				<div class="chords-text leaf" style="overflow-y: auto;"></div>
+			</div>
 		</form>
-		<script>
-chords({lang: 'el'});
-		</script>
 	</body>
 </html>

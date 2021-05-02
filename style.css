@@ -1,0 +1,35 @@
+body {
+	margin: 0px;
+	height: calc(100vh - 16px);
+}
+
+.flex-row {
+	display: flex;
+}
+.flex-col {
+	display: flex;
+	flex-direction: column;
+}
+.flex-wrap {
+	flex-wrap: wrap;
+}
+.flex-grow {
+	flex-grow: 1;
+}
+
+.root {
+	padding: 8px;
+}
+.root .leaf {
+	margin: 8px;
+}
+
+.s12 {
+	width: 100%;
+}
+.s6 {
+	width: 50%;
+}
+.leaf.s6 {
+	width: calc(50% - 16px);
+}

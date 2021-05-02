@@ -1,65 +1,42 @@
-function chords(options = null) {
-	// intervals
-	const dirs = [
-		['up', 'up'],
-		['down', 'down'],
-	];
-	const intervals = [
-		[0, '1st'],
-		[1, '2nd'],
-		[2, '3rd'],
-		[3, '4th'],
-		[4, '5th'],
-		[5, '6th'],
-		[6, '7th'],
-	];
-	const primary = [
-		[-1, 'diminished'],
-		[ 0, 'perfect'],
-		[ 1, 'augmented'],
-	];
-	const secondary = [
-		[-2, 'diminished'],
-		[-1, 'minor'],
-		[ 0, 'major'],
-		[ 1, 'augmented'],
-	];
-	// translator
-	const translator = {
-		_languages: {},
-		add_language: (lang, terms) => {
-			translator._languages[lang] = {};
-			for (const term of terms)
-				translator._languages[lang][term[0]] = term[1];
-		},
-		translate: (s, lang) => {
-			if (!(lang in translator._languages))
-				return s;
-			if (!(s in translator._languages[lang]))
-				return s;
-			return translator._languages[lang][s];
-		},
-	};
-	translator.add_language('el', [
-		['up', 'πάνω'],
-		['down', 'κάτω'],
-		['1st', '1ης'],
-		['2nd', '2ης'],
-		['3rd', '3ης'],
-		['4th', '4ης'],
-		['5th', '5ης'],
-		['6th', '6ης'],
-		['7th', '7ης'],
-		['diminished', 'ελαττωμένο'],
-		['minor', 'μικρό'],
-		['perfect', 'καθαρό'],
-		['major', 'μεγάλο'],
-		['augmented', 'αυξημένο'],
-	]);
+function chords(selector, options = {}) {
 	// transposer
 	const transposer = {
-		_re: /([A-G])(bb?|#|x)?/g,
+		props: [
+			'dir',
+			'interval',
+			'primary',
+			'secondary',
+			'hide',
+			'text',
+			'larger',
+			'smaller',
+		],
+		dirs: [
+			['up', 'up'],
+			['down', 'down'],
+		],
+		intervals: [
+			[0, '1st'],
+			[1, '2nd'],
+			[2, '3rd'],
+			[3, '4th'],
+			[4, '5th'],
+			[5, '6th'],
+			[6, '7th'],
+		],
+		primary: [
+			[-1, 'diminished'],
+			[ 0, 'perfect'],
+			[ 1, 'augmented'],
+		],
+		secondary: [
+			[-2, 'diminished'],
+			[-1, 'minor'],
+			[ 0, 'major'],
+			[ 1, 'augmented'],
+		],
 		is_primary: i => [0, 3, 4].includes(i),
+		_re: /([A-G])(bb?|#|x)?/g,
 		_steps: ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
 		step2str: i => transposer._steps[i],
 		step2int: s => transposer._steps.indexOf(s),
@@ -68,9 +45,8 @@ function chords(options = null) {
 		alter2int: s => transposer._alters.indexOf(s !== undefined ? s : '') - 2,
 		_values: [0, 2, 4, 5, 7, 9, 11],
 		step2val: i => i in transposer._values ? transposer._values[i] : '*',
-		transpose: function(note, transpose) {
-			let step = note[0];
-			let alter = note[1];
+		transpose: (note, transpose) => {
+			let [step, alter] = note;
 			step = transposer.step2int(step);
 			alter = transposer.alter2int(alter);
 			alter += transposer.step2val(step);
@@ -91,97 +67,116 @@ function chords(options = null) {
 			return note;
 		},
 	};
-	// options
-	if (options === null) {
-		options = {};
-	}
-	if (typeof(options) === 'string') {
-		options = {
-			form: options,
-		};
-	}
-	if (!('form' in options))
-		options.form = '#chords';
-	if (!('lang' in options))
-		options.lang = 'en';
-	const props = [
-		'dir',
-		'interval',
-		'primary',
-		'secondary',
-		'hide',
-		'text',
-		'larger',
-		'smaller',
-	];
-	props.forEach(prop => {
-		if (!(prop in options))
-			options[prop] = '.chords-' + prop;
-	});
+	// translator
+	const translator = {
+		languages: {},
+		add_language: (lang, terms) => {
+			translator.languages[lang] = {};
+			for (const term of terms)
+				translator.languages[lang][term[0]] = term[1];
+		},
+		translate: (s, lang) => {
+			if (!(lang in translator.languages))
+				return s;
+			if (!(s in translator.languages[lang]))
+				return s;
+			return translator.languages[lang][s];
+		},
+	};
+	translator.add_language('el', [
+		['up', 'πάνω'],
+		['down', 'κάτω'],
+		['1st', '1ης'],
+		['2nd', '2ης'],
+		['3rd', '3ης'],
+		['4th', '4ης'],
+		['5th', '5ης'],
+		['6th', '6ης'],
+		['7th', '7ης'],
+		['diminished', 'ελαττωμένο'],
+		['minor', 'μικρό'],
+		['perfect', 'καθαρό'],
+		['major', 'μεγάλο'],
+		['augmented', 'αυξημένο'],
+	]);
 	// ready
 	(function($) {
 		$(document).ready(function() {
-			options.form = $(options.form);
-			options.href = options.form.data('chords');
-			props.forEach(prop => {
-				if (typeof(options[prop]) === 'string')
-					options[prop] = options.form.find(options[prop]);
-			});
-			dirs.forEach(x => {
-				const value = x[0];
-				const text = translator.translate(x[1], options.lang);
-				const html = '<option value="' + value + '">' + text + '</option>';
-				options.dir.append(html);
-			});
-			intervals.forEach(x => {
-				const value = x[0];
-				const text = translator.translate(x[1], options.lang);
-				const html = '<option value="' + value + '">' + text + '</option>';
-				options.interval.append(html);
-			});
-			primary.forEach(x => {
-				const value = x[0];
-				const text = translator.translate(x[1], options.lang);
-				const html = '<option value="' + value + '">' + text + '</option>';
-				options.primary.append(html);
-			});
-			secondary.forEach(x => {
-				const value = x[0];
-				const text = translator.translate(x[1], options.lang);
-				const html = '<option value="' + value + '">' + text + '</option>';
-				options.secondary.append(html);
-			});
-			options.hide.hide();
-			options.text.css('display', 'block')
-				.css('font-family', 'monospace')
-				.css('white-space', 'pre');
-			options.larger.hide();
-			options.smaller.hide();
-			options.interval.on('change', function() {
-				const interval = parseInt(options.interval.val());
-				if (transposer.is_primary(interval)) {
-					options.primary.show();
-					options.secondary.hide();
-				} else {
-					options.primary.hide();
-					options.secondary.show();
-				}
-				options.primary.val('0');
-				options.secondary.val('0');
-			}).change();
-			options.form.on('submit', function() {
-				const transpose = {};
-				transpose.diatonic = parseInt(options.interval.val());
-				transpose.chromatic = transposer.step2val(transpose.diatonic);
-				if (transposer.is_primary(transpose.diatonic))
-					transpose.chromatic += parseInt(options.primary.val());
-				else
-					transpose.chromatic += parseInt(options.secondary.val());
-				if (options.dir.val() !== 'up') {
-					transpose.diatonic = -transpose.diatonic;
-					transpose.chromatic = -transpose.chromatic;
-				}
-				$.get(options.href).done(function(data) {
+			$(selector).each(function() {
+				// options
+				const obj = {
+					form: $(this),
+					lang: 'en',
+					data: null,
+					input: null,
+					url: null,
+				};
+				if ('lang' in options)
+					obj.lang = options.lang;
+				else if (obj.form.data('chords-lang') !== undefined)
+					obj.lang = obj.form.data('chords-lang');
+				if ('data' in options)
+					obj.data = options.data;
+				if ('input' in options)
+					obj.input = obj.form.find(options.input);
+				else if (obj.form.data('chords-input') !== undefined)
+					obj.input = obj.form.find(obj.form.data('chords-input'));
+				if ('url' in options)
+					obj.url = options.url;
+				else if (obj.form.data('chords-url') !== undefined)
+					obj.url = obj.form.data('chords-url');
+				transposer.props.forEach(prop => {
+					if (prop in options)
+						obj[prop] = $(options.prop);
+					else
+						obj[prop] = obj.form.find('.chords-' + prop);
+				});
+				// populate
+				transposer.dirs.forEach(x => {
+					const value = x[0];
+					const text = translator.translate(x[1], obj.lang);
+					const html = '<option value="' + value + '">' + text + '</option>';
+					obj.dir.append(html);
+				});
+				transposer.intervals.forEach(x => {
+					const value = x[0];
+					const text = translator.translate(x[1], obj.lang);
+					const html = '<option value="' + value + '">' + text + '</option>';
+					obj.interval.append(html);
+				});
+				transposer.primary.forEach(x => {
+					const value = x[0];
+					const text = translator.translate(x[1], obj.lang);
+					const html = '<option value="' + value + '">' + text + '</option>';
+					obj.primary.append(html);
+				});
+				transposer.secondary.forEach(x => {
+					const value = x[0];
+					const text = translator.translate(x[1], obj.lang);
+					const html = '<option value="' + value + '">' + text + '</option>';
+					obj.secondary.append(html);
+				});
+				// initialize
+				obj.hide.hide();
+				obj.text.css('display', 'block')
+					.css('font-family', 'monospace')
+					.css('white-space', 'pre');
+				obj.larger.hide();
+				obj.smaller.hide();
+				obj.interval.on('change', function() {
+					const interval = parseInt(obj.interval.val());
+					if (transposer.is_primary(interval)) {
+						obj.primary.show();
+						obj.secondary.hide();
+					} else {
+						obj.primary.hide();
+						obj.secondary.show();
+					}
+					obj.primary.val('0');
+					obj.secondary.val('0');
+				}).change();
+				// handlers
+				const main = (data, transpose) => {
 					data = $('<div>' + data + '</div>').text();
 					const lines_old = data.split(/\n|\r\n|\r|\n\r/);
 					const lines_new = [];
@@ -215,29 +210,53 @@ function chords(options = null) {
 						lines_new.push(line);
 					});
 					data = lines_new.join('\n');
-					options.hide.show();
-					options.text.html(data);
-					options.larger.show();
-					options.smaller.show();
-				}).fail(function(jqXHR) {
-					alert(jqXHR.statusText + ' ' + jqXHR.status);
+					obj.hide.show();
+					obj.text.html(data);
+					obj.larger.show();
+					obj.smaller.show();
+				};
+				obj.form.on('submit', function() {
+					const transpose = {};
+					transpose.diatonic = parseInt(obj.interval.val());
+					transpose.chromatic = transposer.step2val(transpose.diatonic);
+					if (transposer.is_primary(transpose.diatonic))
+						transpose.chromatic += parseInt(obj.primary.val());
+					else
+						transpose.chromatic += parseInt(obj.secondary.val());
+					if (obj.dir.val() !== 'up') {
+						transpose.diatonic = -transpose.diatonic;
+						transpose.chromatic = -transpose.chromatic;
+					}
+					if (obj.data !== null) {
+						main(obj.data, transpose);
+					} else if (obj.input !== null) {
+						main(obj.input.val(), transpose);
+					} else if (obj.url !== null) {
+						$.get(obj.url).done(function(data) {
+							main(data, transpose);
+						}).fail(function(jqXHR) {
+							alert(jqXHR.statusText + ' ' + jqXHR.status);
+						});
+					}
+					return false;
 				});
-				return false;
-			});
-			options.hide.on('click', function() {
-				options.hide.hide();
-				options.text.html('');
-				options.larger.hide();
-				options.smaller.hide();
-			});
-			options.larger.on('click', function() {
-				const font_size = parseInt(options.text.css('font-size').replace('px', ''));
-				options.text.css('font-size', (font_size + 1) + 'px');
-			});
-			options.smaller.on('click', function() {
-				const font_size = parseInt(options.text.css('font-size').replace('px', ''));
-				options.text.css('font-size', (font_size - 1) + 'px');
+				obj.hide.on('click', function() {
+					obj.hide.hide();
+					obj.text.html('');
+					obj.larger.hide();
+					obj.smaller.hide();
+				});
+				obj.larger.on('click', function() {
+					const font_size = parseInt(obj.text.css('font-size').replace('px', ''));
+					obj.text.css('font-size', (font_size + 1) + 'px');
+				});
+				obj.smaller.on('click', function() {
+					const font_size = parseInt(obj.text.css('font-size').replace('px', ''));
+					obj.text.css('font-size', (font_size - 1) + 'px');
+				});
 			});
 		});
 	})(jQuery);
 }
+
+chords('.chords');
