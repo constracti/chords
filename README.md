@@ -70,7 +70,7 @@ The transposition parameters are controlled by several select elements, which ar
 - Class `chords-dir` defines the select element that controls the direction (up, down) of the transposition.
 - Class `chords-interval` defines the select element that controls the interval (1st, 2nd, …, 7th) of the transposition.
 - Class `chords-primary` defines the select element that controls the quality of the interval (diminished, perfect, augmented), in case of a primary interval (1st, 4th and 5th).
-- Class `chords-secondary` defines the select element that controls quality of the interval (diminised, minor, major, augmented), in case of a secondary interval (2nd, 3rd, 6th, 7th).
+- Class `chords-secondary` defines the select element that controls quality of the interval (diminished, minor, major, augmented), in case of a secondary interval (2nd, 3rd, 6th, 7th).
 
 #### Button elements
 
@@ -83,12 +83,12 @@ Lyrics and the transposed chords are displayed in an element with class `chords-
 
 ### Options
 
-The effect of `chords` function can be customized through special `data-chords-*` attributes of the container form and the `options` argument. Data attributes have lower precendence and will be checked if the analogous options are not provided.
+The effect of `chords` function can be customized through special `data-chords-*` attributes of the container form and the `options` argument. Data attributes have lower precedence and will be checked if the analogous options are not provided.
 
 - `options.lang` and `data-chords-lang` define the language used to populate the select fields. Default is `'en'` (english). Currently, the only translation available is `'el'` (greek).
 - `options.data` defines the initial text that holds the lyrics. Default is `null`.
 - `options.input` and `data-chords-input` define a selector leading to the input field (usually a textarea) whose value contains the lyrics. Default is `null`.
-- `options.url` and `data-chords-url` define the url pointing to the lyrics throug a GET request. Default is `null`.
+- `options.url` and `data-chords-url` define the url pointing to the lyrics through a GET request. Default is `null`.
 
 Options `data`, `input` and `url` are tested in the order they are mentioned. At least one should have a non-null value.
 
