@@ -126,30 +126,31 @@ function chords(selector, options = {}) {
 				else if (obj.form.data('chords-url') !== undefined)
 					obj.url = obj.form.data('chords-url');
 				transposer.props.forEach(prop => {
-					if (prop in options)
-						obj[prop] = $(options.prop);
-					else
-						obj[prop] = obj.form.find('.chords-' + prop);
+					obj[prop] = obj.form.find('.chords-' + prop);
 				});
 				// populate
+				obj.dir.empty();
 				transposer.dirs.forEach(x => {
 					const value = x[0];
 					const text = translator.translate(x[1], obj.lang);
 					const html = '<option value="' + value + '">' + text + '</option>';
 					obj.dir.append(html);
 				});
+				obj.intervals.empty();
 				transposer.intervals.forEach(x => {
 					const value = x[0];
 					const text = translator.translate(x[1], obj.lang);
 					const html = '<option value="' + value + '">' + text + '</option>';
 					obj.interval.append(html);
 				});
+				obj.primary.empty();
 				transposer.primary.forEach(x => {
 					const value = x[0];
 					const text = translator.translate(x[1], obj.lang);
 					const html = '<option value="' + value + '">' + text + '</option>';
 					obj.primary.append(html);
 				});
+				obj.secondary.empty();
 				transposer.secondary.forEach(x => {
 					const value = x[0];
 					const text = translator.translate(x[1], obj.lang);
