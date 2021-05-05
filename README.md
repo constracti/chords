@@ -20,7 +20,7 @@ Like a diamond in the sky.
 Twinkle, twinkle, little star…
 ```
 
-[twinkle.txt](https://github.com/constracti/chords/blob/main/twinkle.txt) is an example text.
+File [twinkle.txt](https://github.com/constracti/chords/blob/main/twinkle.txt) is an example input text.
 
 Lines with chords are automatically recognized and emphasized using a bold font weight.
 
@@ -57,11 +57,11 @@ Upon invoked on a form, some marked descendant elements will control the appeara
 
 Argument `selector` should be any object that can be accepted as the first argument of the [jQuery constructor](https://api.jquery.com/jQuery/). Functionality will be applied to each form container separately, i.e. each matched element.
 
-Function `chords` is applied automatically with default options to any element having the `chords` class.
+Function `chords` is applied automatically with the default options to any element having the `chords` class.
 
 ### Controls
 
-All control elements should be descendants of the form container.
+All control elements should be hierarchical descendants of the form container.
 
 #### Select elements
 
@@ -69,7 +69,7 @@ The transposition parameters are controlled by several select elements, which ar
 
 - Class `chords-dir` defines the select element that controls the direction (up, down) of the transposition.
 - Class `chords-interval` defines the select element that controls the interval (1st, 2nd, …, 7th) of the transposition.
-- Class `chords-primary` defines the select element that controls the quality of the interval (diminished, perfect, augmented), in case of a primary interval (1st, 4th and 5th).
+- Class `chords-primary` defines the select element that controls the quality of the interval (diminished, perfect, augmented), in case of a primary interval (1st, 4th, 5th).
 - Class `chords-secondary` defines the select element that controls quality of the interval (diminished, minor, major, augmented), in case of a secondary interval (2nd, 3rd, 6th, 7th).
 
 #### Button elements
@@ -115,7 +115,6 @@ Request lyrics from a specific url.
 
 ```javascript
 chords('#chord-container', {
-	language
 	url: 'lyrics-with-chords.txt',
 });
 ```
@@ -124,9 +123,9 @@ chords('#chord-container', {
 
 Input text files should obey certain rules.
 
-- A chord consists of the _root note_, optionally followed by _chord modifiers_ and a _bass note_.
+- A chord consists of the _root note_, optionally followed by the _chord quality_ and a _bass note_.
 	- Allowed _root notes_ are capital latin letters from `A` to `G`, possibly accompanied by an accidental (sharp `#`, flat `b`, double sharp `x` and double flat `bb`).
-	- Any character sequence may indicate a _chord modifier_, provided it does not contain _root notes_ patterns. For simplicity, _altered notes_ and _added tones_ can be considered as part of the _chord modifier_.
+	- Any character sequence may indicate the _chord quality_, provided it does not contain _root notes_ patterns. For simplicity, _altered notes_ and _added tones_ can be considered as part of the _chord quality_.
 	- A _bass note_ is syntactically equivalent to a _root note_, with the exception that it is prefixed by a slash character `/`.
 	- Some examples: `C`, `Ab`, `D/F#`, `G7`, `Csus4`, `Cm`.
 	- More information can be found in [Wikipedia](https://en.wikipedia.org/wiki/Chord_names_and_symbols_(popular_music)).
