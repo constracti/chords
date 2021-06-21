@@ -183,6 +183,7 @@ function chords(selector, options = {}) {
 					obj.tonality = options.tonality;
 				else if (obj.form.data('chords-tonality') !== undefined)
 					obj.tonality = obj.form.data('chords-tonality');
+				obj.tonality = [...obj.tonality.matchAll(transposer._re)][0][0];
 				transposer.props.forEach(prop => {
 					obj[prop] = obj.form.find('.chords-' + prop);
 				});
@@ -274,8 +275,6 @@ function chords(selector, options = {}) {
 					});
 				}).change();
 				$().add(obj.dir).add(obj.diatonic).add(obj.primary).add(obj.secondary).add(obj.src).on('change', function() {
-					if (obj.tonality === null)
-						return;
 					const miter = [...obj.tonality.matchAll(transposer._re)];
 					if (miter.length === 0)
 						return;
