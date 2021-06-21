@@ -3,9 +3,11 @@ function chords(selector, options = {}) {
 	const transposer = {
 		props: [
 			'dir',
-			'interval',
+			'diatonic',
 			'primary',
 			'secondary',
+			'src',
+			'dst',
 			'hide',
 			'text',
 			'larger',
@@ -15,7 +17,7 @@ function chords(selector, options = {}) {
 			['up', 'up'],
 			['down', 'down'],
 		],
-		intervals: [
+		diatonics: [
 			[0, '1st'],
 			[1, '2nd'],
 			[2, '3rd'],
@@ -45,13 +47,41 @@ function chords(selector, options = {}) {
 		alter2int: s => transposer._alters.indexOf(s !== undefined ? s : '') - 2,
 		_values: [0, 2, 4, 5, 7, 9, 11],
 		step2val: i => i in transposer._values ? transposer._values[i] : '*',
-		transpose: (note, transpose) => {
+		interval: (dir, diatonic, primary, secondary) => {
+			const interval = {};
+			interval.diatonic = parseInt(diatonic);
+			interval.chromatic = transposer.step2val(interval.diatonic);
+			if (transposer.is_primary(interval.diatonic))
+				interval.chromatic += parseInt(primary);
+			else
+				interval.chromatic += parseInt(secondary);
+			if (dir !== 'up') {
+				interval.diatonic = -interval.diatonic;
+				interval.chromatic = -interval.chromatic;
+			}
+			return interval;
+		},
+		iinterval: interval => {
+			let dir, diatonic, chromatic;
+			if (interval.diatonic > 0 || interval.diatonic === 0 && interval.chromatic >= 0) {
+				dir = 'up';
+				diatonic = interval.diatonic;
+				chromatic = interval.chromatic;
+			} else {
+				dir = 'down';
+				diatonic = -interval.diatonic;
+				chromatic = -interval.chromatic;
+			}
+			chromatic -= transposer.step2val(diatonic);
+			return [dir, diatonic, chromatic];
+		},
+		transpose: (note, interval) => {
 			let [step, alter] = note;
 			step = transposer.step2int(step);
 			alter = transposer.alter2int(alter);
 			alter += transposer.step2val(step);
-			step += transpose.diatonic;
-			alter += transpose.chromatic;
+			step += interval.diatonic;
+			alter += interval.chromatic;
 			while (step < 0) {
 				step += 7;
 				alter += 12;
@@ -65,6 +95,29 @@ function chords(selector, options = {}) {
 			alter = transposer.alter2str(alter);
 			note = [step, alter];
 			return note;
+		},
+		itranspose: (note_old, note_new) => {
+			let [step_old, alter_old] = note_old;
+			let [step_new, alter_new] = note_new;
+			step_old = transposer.step2int(step_old);
+			alter_old = transposer.alter2int(alter_old);
+			alter_old += transposer.step2val(step_old);
+			step_new = transposer.step2int(step_new);
+			alter_new = transposer.alter2int(alter_new);
+			alter_new += transposer.step2val(step_new);
+			const interval = {
+				diatonic: step_new - step_old,
+				chromatic: alter_new - alter_old,
+			};
+			if (interval.diatonic > 3) {
+				interval.diatonic -= 7;
+				interval.chromatic -= 12;
+			}
+			if (interval.diatonic < -3) {
+				interval.diatonic += 7;
+				interval.chromatic += 12;
+			}
+			return interval;
 		},
 	};
 	// translator
@@ -110,6 +163,7 @@ function chords(selector, options = {}) {
 					data: null,
 					input: null,
 					url: null,
+					tonality: 'C',
 				};
 				if ('lang' in options)
 					obj.lang = options.lang;
@@ -125,6 +179,10 @@ function chords(selector, options = {}) {
 					obj.url = options.url;
 				else if (obj.form.data('chords-url') !== undefined)
 					obj.url = obj.form.data('chords-url');
+				if ('tonality' in options)
+					obj.tonality = options.tonality;
+				else if (obj.form.data('chords-tonality') !== undefined)
+					obj.tonality = obj.form.data('chords-tonality');
 				transposer.props.forEach(prop => {
 					obj[prop] = obj.form.find('.chords-' + prop);
 				});
@@ -136,12 +194,12 @@ function chords(selector, options = {}) {
 					const html = '<option value="' + value + '">' + text + '</option>';
 					obj.dir.append(html);
 				});
-				obj.interval.empty();
-				transposer.intervals.forEach(x => {
+				obj.diatonic.empty();
+				transposer.diatonics.forEach(x => {
 					const value = x[0];
 					const text = translator.translate(x[1], obj.lang);
 					const html = '<option value="' + value + '">' + text + '</option>';
-					obj.interval.append(html);
+					obj.diatonic.append(html);
 				});
 				obj.primary.empty();
 				transposer.primary.forEach(x => {
@@ -157,6 +215,22 @@ function chords(selector, options = {}) {
 					const html = '<option value="' + value + '">' + text + '</option>';
 					obj.secondary.append(html);
 				});
+				obj.src.empty();
+				transposer._steps.forEach(step => {
+					transposer._alters.slice(1, -1).forEach(alter => {
+						const value = step + alter;
+						const html = '<option value="' + value + '">' + value + '</option>';
+						obj.src.append(html);
+					});
+				});
+				obj.dst.empty();
+				transposer._steps.forEach(step => {
+					transposer._alters.slice(1, -1).forEach(alter => {
+						const value = step + alter;
+						const html = '<option value="' + value + '">' + value + '</option>';
+						obj.dst.append(html);
+					});
+				});
 				// initialize
 				obj.hide.hide();
 				obj.text.css('display', 'block')
@@ -164,20 +238,77 @@ function chords(selector, options = {}) {
 					.css('white-space', 'pre');
 				obj.larger.hide();
 				obj.smaller.hide();
-				obj.interval.on('change', function() {
-					const interval = parseInt(obj.interval.val());
-					if (transposer.is_primary(interval)) {
+				obj.diatonic.on('change', function() {
+					const diatonic = parseInt(obj.diatonic.val());
+					if (transposer.is_primary(diatonic)) {
 						obj.primary.show();
 						obj.secondary.hide();
 					} else {
 						obj.primary.hide();
 						obj.secondary.show();
 					}
-					obj.primary.val('0');
-					obj.secondary.val('0');
+					obj.primary.val(0);
+					obj.secondary.val(0);
+				});
+				obj.src.val(obj.tonality);
+				obj.src.on('change', function() {
+					obj.tonality = obj.src.val();
+					obj.dst.find('option').each(function() {
+						const value = $(this).val();
+						const miter = [...obj.tonality.matchAll(transposer._re)];
+						if (miter.length === 0)
+							return;
+						const m = miter[0];
+						const niter = [...value.matchAll(transposer._re)];
+						if (niter.length === 0)
+							return;
+						const n = niter[0];
+						const interval = transposer.itranspose([m[1], m[2]], [n[1], n[2]]);
+						const [dir, diatonic, chromatic] = transposer.iinterval(interval);
+						let disabled;
+						if (transposer.is_primary(diatonic))
+							disabled = chromatic < -1 || chromatic > 1;
+						else
+							disabled = chromatic < -2 || chromatic > 1;
+						$(this).prop('disabled', disabled);
+					});
 				}).change();
+				$().add(obj.dir).add(obj.diatonic).add(obj.primary).add(obj.secondary).add(obj.src).on('change', function() {
+					if (obj.tonality === null)
+						return;
+					const miter = [...obj.tonality.matchAll(transposer._re)];
+					if (miter.length === 0)
+						return;
+					const m = miter[0];
+					const interval = transposer.interval(obj.dir.val(), obj.diatonic.val(), obj.primary.val(), obj.secondary.val());
+					const note_old = m[0];
+					const note_new = transposer.transpose([m[1], m[2]], interval).join('');
+					obj.dst.val(note_new);
+				});
+				obj.diatonic.change();
+				$(obj.dst).on('change', function() {
+					const miter = [...obj.tonality.matchAll(transposer._re)];
+					if (miter.length === 0)
+						return;
+					const m = miter[0];
+					const niter = [...obj.dst.val().matchAll(transposer._re)];
+					if (niter.length === 0)
+						return;
+					const n = niter[0];
+					const interval = transposer.itranspose([m[1], m[2]], [n[1], n[2]]);
+					const [dir, diatonic, chromatic] = transposer.iinterval(interval);
+					obj.dir.val(dir);
+					obj.diatonic.val(diatonic);
+					if (transposer.is_primary(diatonic)) {
+						obj.primary.val(chromatic).show();
+						obj.secondary.val(0).hide();
+					} else {
+						obj.primary.val(0).hide();
+						obj.secondary.val(chromatic).show();
+					}
+				});
 				// handlers
-				const main = (data, transpose) => {
+				const main = (data, interval) => {
 					data = $('<div>' + data + '</div>').text();
 					const lines_old = data.split(/\n|\r\n|\r|\n\r/);
 					const lines_new = [];
@@ -190,7 +321,7 @@ function chords(selector, options = {}) {
 							const miter = line.matchAll(transposer._re);
 							for (const m of miter) {
 								const note_old = m[0];
-								const note_new = transposer.transpose([m[1], m[2]], transpose).join('');
+								const note_new = transposer.transpose([m[1], m[2]], interval).join('');
 								let prev = line.slice(0, m.index + offset);
 								let next = line.slice(m.index + offset + note_old.length);
 								if (offset < 0 && prev.slice(-1) !== '/') {
@@ -217,24 +348,14 @@ function chords(selector, options = {}) {
 					obj.smaller.show();
 				};
 				obj.form.on('submit', function() {
-					const transpose = {};
-					transpose.diatonic = parseInt(obj.interval.val());
-					transpose.chromatic = transposer.step2val(transpose.diatonic);
-					if (transposer.is_primary(transpose.diatonic))
-						transpose.chromatic += parseInt(obj.primary.val());
-					else
-						transpose.chromatic += parseInt(obj.secondary.val());
-					if (obj.dir.val() !== 'up') {
-						transpose.diatonic = -transpose.diatonic;
-						transpose.chromatic = -transpose.chromatic;
-					}
+					const interval = transposer.interval(obj.dir.val(), obj.diatonic.val(), obj.primary.val(), obj.secondary.val());
 					if (obj.data !== null) {
-						main(obj.data, transpose);
+						main(obj.data, interval);
 					} else if (obj.input !== null) {
-						main(obj.input.val(), transpose);
+						main(obj.input.val(), interval);
 					} else if (obj.url !== null) {
 						$.get(obj.url).done(function(data) {
-							main(data, transpose);
+							main(data, interval);
 						}).fail(function(jqXHR) {
 							alert(jqXHR.statusText + ' ' + jqXHR.status);
 						});
