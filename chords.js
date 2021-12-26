@@ -235,7 +235,6 @@ function chords(selector, options = {}) {
 				// initialize
 				obj.hide.hide();
 				obj.text.css('display', 'block')
-					.css('font-family', 'monospace')
 					.css('white-space', 'pre');
 				obj.larger.hide();
 				obj.smaller.hide();

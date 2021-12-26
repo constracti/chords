@@ -77,6 +77,7 @@ The transposition parameters are controlled by several select elements, which ar
 #### Button elements
 
 Lyrics and the transposed chords are displayed in an element with class `chords-text`, whose appearance is controlled by multiple buttons.
+It is highly recommended to apply a monospaced font family on this element.
 
 - A submission of the form (usually clicking a button with the `type="submit"` attribute) shows the lyrics.
 - An element with class `chords-hide` hides the lyrics.
@@ -112,7 +113,7 @@ Load lyrics through a textarea element and display transposition options in gree
 	<button type="button" class="chords-hide">hide</button>
 	<button type="button" class="chords-larger">&plus;</button>
 	<button type="button" class="chords-smaller">&minus;</button>
-	<div class="chords-text"></div>
+	<div class="chords-text" style="font-family: monospace;"></div>
 </form>
 ```
 
