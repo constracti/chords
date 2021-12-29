@@ -12,6 +12,8 @@ function chords(selector, options = {}) {
 			'text',
 			'larger',
 			'smaller',
+			'copy',
+			'copied',
 		],
 		dirs: [
 			['up', 'up'],
@@ -238,6 +240,8 @@ function chords(selector, options = {}) {
 					.css('white-space', 'pre');
 				obj.larger.hide();
 				obj.smaller.hide();
+				obj.copy.hide();
+				obj.copied.hide();
 				obj.diatonic.on('change', function() {
 					const diatonic = parseInt(obj.diatonic.val());
 					if (transposer.is_primary(diatonic)) {
@@ -344,6 +348,7 @@ function chords(selector, options = {}) {
 					obj.text.html(data);
 					obj.larger.show();
 					obj.smaller.show();
+					obj.copy.show();
 				};
 				obj.form.on('submit', function() {
 					const interval = transposer.interval(obj.dir.val(), obj.diatonic.val(), obj.primary.val(), obj.secondary.val());
@@ -365,6 +370,7 @@ function chords(selector, options = {}) {
 					obj.text.html('');
 					obj.larger.hide();
 					obj.smaller.hide();
+					obj.copy.hide();
 				});
 				obj.larger.on('click', function() {
 					const font_size = parseInt(obj.text.css('font-size').replace('px', ''));
@@ -373,6 +379,16 @@ function chords(selector, options = {}) {
 				obj.smaller.on('click', function() {
 					const font_size = parseInt(obj.text.css('font-size').replace('px', ''));
 					obj.text.css('font-size', (font_size - 1) + 'px');
+				});
+				obj.copy.on('click', function() {
+					const range = document.createRange();
+					range.selectNode(obj.text.get(0));
+					const selection = window.getSelection();
+					selection.removeAllRanges();
+					selection.addRange(range);
+					document.execCommand('copy');
+					selection.removeAllRanges();
+					obj.copied.fadeIn().delay(1000).fadeOut();
 				});
 			});
 		});
