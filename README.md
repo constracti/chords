@@ -83,6 +83,7 @@ It is highly recommended to apply a monospaced font family on this element.
 - An element with class `chords-hide` hides the lyrics.
 - An element with class `chords-larger` increases the text size of the lyrics.
 - An element with class `chords-smaller` decreases the text size of the lyrics.
+- An element with class `chords-copy` copies lyrics to the clipboard. When clicked, an element with class `chords-copied` is faded in for 1 second.
 
 ### Options
 
@@ -113,6 +114,8 @@ Load lyrics through a textarea element and display transposition options in gree
 	<button type="button" class="chords-hide">hide</button>
 	<button type="button" class="chords-larger">&plus;</button>
 	<button type="button" class="chords-smaller">&minus;</button>
+	<button type="button" class="chords-copy">copy</button>
+	<span class="chords-copied">copied!</span>
 	<div class="chords-text" style="font-family: monospace;"></div>
 </form>
 ```
