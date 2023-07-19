@@ -144,4 +144,4 @@ Input text files should obey certain rules.
 - It is strongly recommended to use space and not tab characters, so that alignment is maintained.
 - Any line ending (`CR+LF`, `LF`, `CR`) is supported.
 
-A testing page can be found [here](https://raktivan.gr/chords/).
+A testing page can be found [here](https://constracti.github.io/chords/).
